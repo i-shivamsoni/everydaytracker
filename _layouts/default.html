@@ -1,0 +1,604 @@
+---
+layout: default
+title: Habit Tracker
+---
+
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker</title>
+    <style>
+        :root {
+            /* Dark theme (default) */
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #242424;
+            --bg-tertiary: #333;
+            --bg-active: #404040;
+            --text-primary: #c0c0c0;
+            --text-secondary: #888;
+            --shadow: rgba(0, 0, 0, 0.1);
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #ffffff;
+            --bg-tertiary: #e9ecef;
+            --bg-active: #dee2e6;
+            --text-primary: #333333;
+            --text-secondary: #6c757d;
+            --shadow: rgba(0, 0, 0, 0.05);
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+
+        .year {
+            font-size: clamp(2rem, 5vw, 3rem);
+            text-align: left;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: background-color 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .theme-toggle svg {
+            width: 24px;
+            height: 24px;
+            transition: transform 0.3s ease;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 3rem;
+            padding: 0 1rem;
+            flex: 1;
+        }
+
+        .categories {
+            min-width: 250px;
+            flex-shrink: 0;
+            background-color: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1rem;
+            height: fit-content;
+            box-shadow: var(--card-shadow);
+            position: sticky;
+            top: 1.5rem;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .category {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            font-size: clamp(1rem, 2.5vw, 1.25rem);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .category:hover {
+            background-color: var(--bg-tertiary);
+        }
+
+        .category.active {
+            background-color: var(--bg-active);
+        }
+
+        .dot {
+            width: clamp(18px, 4.5vw, 24px);
+            height: clamp(18px, 4.5vw, 24px);
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .calendar-wrapper {
+            flex-grow: 1;
+            background-color: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            transition: background-color 0.3s ease;
+            box-shadow: var(--card-shadow);
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .month {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .month-name {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            text-transform: capitalize;
+            font-weight: 500;
+            height: 1.5rem;
+            display: flex;
+            align-items: center;
+            transition: color 0.3s ease;
+        }
+
+        .days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            justify-items: center;
+        }
+
+        .day {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--bg-tertiary);
+            cursor: pointer;
+            transition: all 0.2s ease, background-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .day:hover {
+            transform: scale(1.1);
+        }
+
+        .multi-habit {
+            background-color: var(--bg-tertiary) !important;
+            display: flex !important;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            border-radius: 50%;
+            width: 100%;
+            height: 100%;
+            transition: background-color 0.3s ease;
+        }
+
+        .habit-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            margin: 1px;
+        }
+
+        .hidden {
+            opacity: 0.2;
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease, background-color 0.3s ease, color 0.3s ease;
+            max-width: 300px;
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+
+        .tooltip-date {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .tooltip-habits {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .tooltip-habit {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tooltip-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        @media (max-width: 1200px) {
+            .calendar {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .calendar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .calendar {
+                grid-template-columns: 1fr;
+            }
+
+            .categories {
+                width: 100%;
+                position: static;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="year">2025</div>
+            <button class="theme-toggle" aria-label="Toggle theme" title="Toggle theme">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="theme-icon">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" class="moon-icon"></path>
+                    <circle cx="12" cy="12" r="5" class="sun-icon" style="display:none"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3" class="sun-icon" style="display:none"></line>
+                    <line x1="12" y1="21" x2="12" y2="23" class="sun-icon" style="display:none"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" class="sun-icon" style="display:none"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" class="sun-icon" style="display:none"></line>
+                    <line x1="1" y1="12" x2="3" y2="12" class="sun-icon" style="display:none"></line>
+                    <line x1="21" y1="12" x2="23" y2="12" class="sun-icon" style="display:none"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" class="sun-icon" style="display:none"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" class="sun-icon" style="display:none"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="main-content">
+            <div class="categories">
+                {% for habit in site.habits %}
+                <div class="category" data-category="{{ habit[0] }}">
+                    <span class="dot" style="background-color: {{ habit[1] }};"></span>
+                    <span>{{ habit[0] | capitalize }}</span>
+                </div>
+                {% endfor %}
+                <div class="category" data-category="all">
+                    <span>Show All</span>
+                </div>
+            </div>
+            <div class="calendar-wrapper">
+                <div class="calendar"></div>
+                <div class="tooltip">
+                    <div class="tooltip-date"></div>
+                    <div class="tooltip-habits"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const habits = {
+            {% for habit in site.habits %}
+            "{{ habit[0] }}": {
+                color: "{{ habit[1] }}",
+                dates: [
+                    {% for post in site.posts %}
+                    {% if post.category == habit[0] %}
+                    "{{ post.date | date: '%Y-%m-%d' }}"{% unless forloop.last %},{% endunless %}
+                    {% endif %}
+                    {% endfor %}
+                ]
+            }{% unless forloop.last %},{% endunless %}
+            {% endfor %}
+        };
+
+        const months = [
+            'january', 'february', 'march', 'april',
+            'may', 'june', 'july', 'august',
+            'september', 'october', 'november', 'december'
+        ];
+
+        const daysPerMonth = {
+            january: 31, february: 28, march: 31, april: 30,
+            may: 31, june: 30, july: 31, august: 31,
+            september: 30, october: 31, november: 30, december: 31
+        };
+
+        function getDateString(year, month, day) {
+            return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        }
+
+        function createMultiHabitDay(activeHabits) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'multi-habit';
+
+            // For two habits
+            if (activeHabits.length === 2) {
+                activeHabits.forEach(habit => {
+                    const dot = document.createElement('span');
+                    dot.className = 'habit-dot';
+                    dot.style.backgroundColor = habits[habit].color;
+                    wrapper.appendChild(dot);
+                });
+            }
+            // For three habits - triangle arrangement
+            else if (activeHabits.length === 3) {
+                const container = document.createElement('div');
+                container.style.cssText = 'display: flex; flex-direction: column; align-items: center; padding: 4px;';
+
+                // Top dot
+                const topDot = document.createElement('span');
+                topDot.className = 'habit-dot';
+                topDot.style.backgroundColor = habits[activeHabits[0]].color;
+                container.appendChild(topDot);
+
+                // Bottom two dots container
+                const bottomRow = document.createElement('div');
+                bottomRow.style.cssText = 'display: flex; gap: 2px; margin-top: 1px;';
+
+                activeHabits.slice(1).forEach(habit => {
+                    const dot = document.createElement('span');
+                    dot.className = 'habit-dot';
+                    dot.style.backgroundColor = habits[habit].color;
+                    bottomRow.appendChild(dot);
+                });
+
+                container.appendChild(bottomRow);
+                wrapper.appendChild(container);
+            }
+            // For four or more habits
+            else {
+                const container = document.createElement('div');
+                container.style.cssText = 'display: flex; flex-wrap: wrap; gap: 1px; padding: 4px; justify-content: center;';
+
+                activeHabits.forEach(habit => {
+                    const dot = document.createElement('span');
+                    dot.className = 'habit-dot';
+                    dot.style.backgroundColor = habits[habit].color;
+                    container.appendChild(dot);
+                });
+
+                wrapper.appendChild(container);
+            }
+
+            return wrapper.outerHTML;
+        }
+
+        function createCalendar() {
+            const calendar = document.querySelector('.calendar');
+            const year = 2025;
+
+            // Create all month containers first with consistent structure
+            months.forEach((monthName, monthIndex) => {
+                const monthDiv = document.createElement('div');
+                monthDiv.className = 'month';
+                monthDiv.setAttribute('data-month', monthName);
+
+                const monthNameDiv = document.createElement('div');
+                monthNameDiv.className = 'month-name';
+                monthNameDiv.textContent = monthName;
+
+                const daysDiv = document.createElement('div');
+                daysDiv.className = 'days';
+
+                monthDiv.appendChild(monthNameDiv);
+                monthDiv.appendChild(daysDiv);
+                calendar.appendChild(monthDiv);
+            });
+
+            // Then populate each month with days
+            months.forEach((monthName, monthIndex) => {
+                const daysDiv = document.querySelector(`.month[data-month="${monthName}"] .days`);
+
+                for (let i = 1; i <= daysPerMonth[monthName]; i++) {
+                    const dateStr = getDateString(year, monthIndex, i);
+                    const activeHabits = Object.keys(habits).filter(habit =>
+                        habits[habit].dates.includes(dateStr)
+                    );
+
+                    const dayDiv = document.createElement('div');
+                    dayDiv.className = 'day';
+
+                    if (activeHabits.length > 0) {
+                        if (activeHabits.length === 1) {
+                            dayDiv.style.backgroundColor = habits[activeHabits[0]].color;
+                        } else {
+                            dayDiv.innerHTML = createMultiHabitDay(activeHabits);
+                        }
+
+                        dayDiv.setAttribute('data-date', dateStr);
+                        activeHabits.forEach(habit => {
+                            dayDiv.setAttribute(`data-${habit}`, true);
+                        });
+                    }
+
+                    daysDiv.appendChild(dayDiv);
+                }
+            });
+        }
+
+        function initializeTooltips() {
+            const tooltip = document.querySelector('.tooltip');
+            const days = document.querySelectorAll('.day[data-date]');
+
+            days.forEach(day => {
+                day.addEventListener('mouseenter', (e) => {
+                    const date = new Date(day.dataset.date);
+                    const activeHabits = Object.keys(habits).filter(habit =>
+                        day.hasAttribute(`data-${habit}`)
+                    );
+
+                    tooltip.querySelector('.tooltip-date').textContent =
+                        date.toLocaleDateString('en-US', {
+                            weekday: 'short',
+                            month: 'short',
+                            day: 'numeric'
+                        });
+
+                    tooltip.querySelector('.tooltip-habits').innerHTML =
+                        activeHabits.map(habit => `
+                            <div class="tooltip-habit">
+                                <span class="tooltip-dot" style="background-color: ${habits[habit].color}"></span>
+                                <span>${habit.charAt(0).toUpperCase() + habit.slice(1)}</span>
+                            </div>
+                        `).join('');
+
+                    const rect = day.getBoundingClientRect();
+                    const tooltipRect = tooltip.getBoundingClientRect();
+
+                    let left = rect.left + window.scrollX - tooltipRect.width / 2 + rect.width / 2;
+                    let top = rect.top + window.scrollY - tooltipRect.height - 10;
+
+                    if (left < 0) left = 0;
+                    if (left + tooltipRect.width > window.innerWidth) {
+                        left = window.innerWidth - tooltipRect.width;
+                    }
+                    if (top < 0) {
+                        top = rect.bottom + window.scrollY + 10;
+                    }
+
+                    tooltip.style.left = `${left}px`;
+                    tooltip.style.top = `${top}px`;
+                    tooltip.classList.add('visible');
+                });
+
+                day.addEventListener('mouseleave', () => {
+                    tooltip.classList.remove('visible');
+                });
+            });
+        }
+
+        function initializeFilters() {
+            const categories = document.querySelectorAll('.category');
+            categories.forEach(category => {
+                category.addEventListener('click', () => {
+                    categories.forEach(c => c.classList.remove('active'));
+                    category.classList.add('active');
+
+                    const selectedCategory = category.dataset.category;
+                    const days = document.querySelectorAll('.day');
+
+                    days.forEach(day => {
+                        if (selectedCategory === 'all') {
+                            day.classList.remove('hidden');
+                        } else {
+                            if (!day.hasAttribute(`data-${selectedCategory}`)) {
+                                day.classList.add('hidden');
+                            } else {
+                                day.classList.remove('hidden');
+                            }
+                        }
+                    });
+                });
+            });
+
+            // Set "Show All" as initially active
+            document.querySelector('[data-category="all"]').classList.add('active');
+        }
+
+        function initializeThemeToggle() {
+            const themeToggle = document.querySelector('.theme-toggle');
+            const moonIcon = document.querySelector('.moon-icon');
+            const sunIconElements = document.querySelectorAll('.sun-icon');
+            const htmlElement = document.documentElement;
+
+            // Check for saved theme preference or use system preference
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                htmlElement.setAttribute('data-theme', savedTheme);
+                updateThemeIcon(savedTheme);
+            } else {
+                // Check system preference
+                const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const systemTheme = prefersDarkScheme ? 'dark' : 'light';
+                htmlElement.setAttribute('data-theme', systemTheme);
+                updateThemeIcon(systemTheme);
+            }
+
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = htmlElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+                htmlElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                updateThemeIcon(newTheme);
+            });
+
+            function updateThemeIcon(theme) {
+                if (theme === 'dark') {
+                    moonIcon.style.display = 'block';
+                    sunIconElements.forEach(el => el.style.display = 'none');
+                } else {
+                    moonIcon.style.display = 'none';
+                    sunIconElements.forEach(el => el.style.display = 'block');
+                }
+            }
+        }
+
+        // Initialize everything
+        createCalendar();
+        initializeTooltips();
+        initializeFilters();
+        initializeThemeToggle();
+    </script>
+</body>
+</html>
